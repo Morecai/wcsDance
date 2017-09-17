@@ -6,7 +6,9 @@ body {
     background-size: cover;
     color: #ccc;
 }
-
+.container {
+    background: url("./WCS.jpg") no-repeat center center fixed;
+}
 .navbar-default {
     background-image: linear-gradient(to bottom,#1424E4 0,#222 100%);
 }
