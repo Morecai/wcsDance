@@ -1,11 +1,11 @@
-var React = require('react');
-var Router = require('react-router')
+import React from 'react';
+import { Router, Route, hashHistory, IndexRoute } from 'react-router';
 
 var Register = React.createClass({
 
     getInitialState: function () {
         return {
-            lastNmae: "",
+            lastName: "",
             firstName: "",
             userName: "",
             email: "",
@@ -14,20 +14,6 @@ var Register = React.createClass({
         }
     },
 
-    // handleChange: function (event) {
-
-    //     var newState = {};
-    //     newState[event.target.id] = event.target.value;
-    //     this.setState(newState);
-    // },
-
-    // handleSubmit: function () {
-
-    //     this
-    //         .props
-    //         .updateSearch(this.state.search, this.state.start, this.state.end);
-    //     return false;
-    // },
 
     render: function () {
         const style = {
