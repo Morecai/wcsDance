@@ -1,81 +1,115 @@
 var express = require('express');
+var path = require('path');
+var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-// var mongoose = require('mongoose');
-// var Article = require('./models/Article.js');
+var expressValidator = require('express-validator');
+var flash = require('connect-flash');
+var session = require('express-session');
+var passport = require('passport');
+var LocalStrategy = require('passport-local'), Strategy;
+// var logger = require("morgan");
+var mongoose = require("mongoose");
+var port = process.env.PORT || 3000;
 
+mongoose.Promise = Promise;
+
+var controllers = require('./controllers');
+var users = require('./controllers/users');
+var contests = require('./controllers/contests');
+var participants = require('./controllers/participants');
+var finals = require('./controllers/finals');
+var results = require('./controllers/results');
+var finalresults = require('./controllers/final-results');
+
+
+// Init App
 var app = express();
-var PORT = process.env.PORT || 3000;
 
+// Middle ware
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.text());
-app.use(bodyParser.json({type:'application/vnd.api+json'}));
+app.use(cookieParser());
 
-app.use(express.static('./public'));
+// Set static folder
+// app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static("public"));
+// Express Session
+app.use(session( {
+	secret: 'secret',
+	saveUninitialized: true,
+	resave: true
+}))
 
-// Local link
-var link = 'mongodb://localhost/wcsDance';
+// Passport init
+app.use(passport.initialize());
+app.use(passport.session());
 
-// mongoose.connect(link);
-// var db = mongoose.connection;
+// Express Validator
+app.use(expressValidator( {
+	errorFormatter: function(param, msg, value) {
+		var namespace = param.split('.')
+		, root = namespace.shift()
+		, formParam = root;
 
-// db.on('error', function (err) {
-//   console.log('Mongoose Error: ', err);
-// });
+		while(namespace.length) {
+			formParam += '[' + namespace.shift() + ']';
+		}
+		return {
+			param: formParam,
+			msg: msg,
+			value: value
+		};
+	}
+}));
 
-// db.once('open', function () {
-//   console.log('Mongoose connection successful.');
-// });
+// Connect Flash middleware
+app.use(flash());
 
-app.get('/', function(req, res){
-  res.sendFile('./public/index.html');
+// Global vars
+app.use(function (req, res, next) {
+	res.locals.success_msg = req.flash('success_msg');
+	res.locals.error_msg = req.flash('error_msg');
+	res.locals.error = req.flash('error');
+	res.locals.user = req.user || null;
+	next();
 })
 
-app.get('/api/register', function(req, res) {
 
-  // Article.find({})
-  //   .exec(function(err, doc){
 
-  //     if(err){
-  //       console.log(err);
-  //     }
-  //     else {
-  //       res.send(doc);
-  //     }
-  //   })
+
+app.use('/', controllers)
+app.use('/users', users);
+app.use('/contests', contests);
+app.use('/participants', participants);
+app.use('/results', results);
+app.use('/finals', finals);
+app.use('/finalresults', finalresults);
+
+
+
+mongoose.connect("mongodb://dinoman:UACodingB00tcamp@ds139904.mlab.com:39904/wcs", {
+  useMongoClient: true
 });
 
-// app.post('/api/saved', function(req, res){
-//   var newArticle = new Article(req.body);
+// mongoose.connect("mongodb://heroku_7xv0ms44:jriutdh8133p3346nidtts62m2@ds149844.mlab.com:49844/heroku_7xv0ms44");
 
-//   var title = req.body.title;
-//   var date = req.body.date;
-//   var url = req.body.url;
+// MONGODB_URI: mongodb://heroku_7xv0ms44:jriutdh8133p3346nidtts62m2@ds149844.mlab.com:49844/heroku_7xv0ms44
 
-//   newArticle.save(function(err, doc){
-//     if(err){
-//       console.log(err);
-//     } else {
-//       res.send(doc._id);
-//     }
+// mongoose.connect("mongodb://localhost/wcs", {
+// 	useMongoClient: true
 //   });
-// });
 
-// app.delete('/api/saved/', function(req, res){
+var db = mongoose.connection;
 
-//   var url = req.param('url');
-
-//   Article.find({"url": url}).remove().exec(function(err, data){
-//     if(err){
-//       console.log(err);
-//     }
-//     else {
-//       res.send("Deleted");
-//     }
-//   });
-// });
-
-
-app.listen(PORT, function() {
-  console.log("App listening on PORT: " + PORT);
+db.on("error", function(error) {
+  console.log("Mongoose Error: ", error);
 });
+
+db.once("open", function() {
+  console.log("Mongoose connection successful.");
+  app.listen(port, function() {
+		console.log("App listening on PORT " + port);
+	});
+});
+
